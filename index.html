@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="description"
+    content="Plan concrete test batches and calculate target CO₂ uptake, gas flow and expected outlet pH."
+  >
+
+  <title>CO₂ Batch Planner</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="brand" href="#">◉ CO₂ LAB</a>
+    <span class="header-label">BATCH PLANNER</span>
+
+    <a
+      class="results-link"
+      href="https://co2-water-optimization.vercel.app"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Explore test results ↗
+    </a>
+  </header>
+
+  <main>
+    <section class="intro">
+      <span class="eyebrow">FROM MIX DESIGN TO OPERATING PLAN</span>
+
+      <h1>Your next batch,<br>worked out.</h1>
+
+      <p>
+        Set your batch size, mix design and CO₂ dose.
+        Get material quantities and an estimated operating target
+        from the water optimization tests.
+      </p>
+    </section>
+
+    <div class="planner-layout">
+      <form id="planner-form" class="input-panel">
+        <section class="input-section">
+          <div class="section-heading">
+            <span class="step-number">01</span>
+
+            <div>
+              <h2>Size your batch</h2>
+              <p>Concrete mass excludes the mould itself.</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <label for="cube-count">
+              Number of cubes
+              <input
+                id="cube-count"
+                name="cubeCount"
+                type="number"
+                value="10"
+                min="1"
+                step="1"
+                required
+              >
+            </label>
+
+            <label for="cube-mass">
+              Fresh concrete per cube
+              <div class="input-unit">
+                <input
+                  id="cube-mass"
+                  name="cubeMass"
+                  type="number"
+                  value="8"
+                  min="0.001"
+                  step="any"
+                  required
+                >
+                <span>kg</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="inline-result">
+            Total concrete
+            <strong id="total-mass-preview">—</strong>
+          </div>
+        </section>
+
+        <section class="input-section">
+          <div class="section-heading">
+            <span class="step-number">02</span>
+
+            <div>
+              <h2>Enter your mix</h2>
+              <p>Proportions by mass.</p>
+            </div>
+          </div>
+
+          <div class="ratio-grid">
+            <label for="cement-ratio">
+              Cement
+              <input
+                id="cement-ratio"
+                name="cementRatio"
+                type="number"
+                value="1"
+                min="0.001"
+                step="any"
+                required
+              >
+            </label>
+
+            <span class="ratio-divider" aria-hidden="true">:</span>
+
+            <label for="fine-ratio">
+              Fine aggregate
+              <input
+                id="fine-ratio"
+                name="fineRatio"
+                type="number"
+                value="2.5"
+                min="0"
+                step="any"
+                required
+              >
+            </label>
+
+            <span class="ratio-divider" aria-hidden="true">:</span>
+
+            <label for="coarse-ratio">
+              Coarse aggregate
+              <input
+                id="coarse-ratio"
+                name="coarseRatio"
+                type="number"
+                value="2.5"
+                min="0"
+                step="any"
+                required
+              >
+            </label>
+          </div>
+
+          <label class="full-field" for="water-cement-ratio">
+            Water-to-cement ratio
+            <input
+              id="water-cement-ratio"
+              name="waterCementRatio"
+              type="number"
+              value="0.45"
+              min="0.001"
+              step="any"
+              required
+            >
+          </label>
+        </section>
+
+        <section class="input-section">
+          <div class="section-heading">
+            <span class="step-number">03</span>
+
+            <div>
+              <h2>Set your CO₂ target</h2>
+              <p>Added CO₂ as a percentage of cement mass.</p>
+            </div>
+          </div>
+
+          <label for="target-dose">
+            Target dose
+            <div class="input-unit">
+              <input
+                id="target-dose"
+                name="targetDose"
+                type="number"
+                value="0.01"
+                min="0"
+                step="any"
+                required
+              >
+              <span>%</span>
+            </div>
+          </label>
+
+          <fieldset class="speed-fieldset">
+            <legend>Pump speed</legend>
+
+            <div class="speed-options">
+              <label>
+                <input
+                  type="radio"
+                  name="pumpSpeed"
+                  value="30"
+                  checked
+                >
+                <span>30 Hz</span>
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="pumpSpeed"
+                  value="40"
+                >
+                <span>40 Hz</span>
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="pumpSpeed"
+                  value="50"
+                >
+                <span>50 Hz</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <p class="field-note">
+            All calculated mixing water is assumed to be carbonated.
+          </p>
+        </section>
+
+        <button class="reset-button" type="reset">
+          Reset to example batch
+        </button>
+      </form>
+
+      <section
+        class="results-panel"
+        aria-label="Calculated batch plan"
+      >
+        <div
+          id="validation-message"
+          class="validation-message"
+          role="alert"
+          hidden
+        ></div>
+
+        <div id="plan-results">
+          <div class="results-heading">
+            <div>
+              <span class="eyebrow">YOUR BATCH PLAN</span>
+              <h2>Ready to work with.</h2>
+            </div>
+
+            <span id="batch-summary" class="batch-summary">—</span>
+          </div>
+
+          <section class="materials-section">
+            <h3>Weigh out</h3>
+
+            <div class="material-grid">
+              <article class="material-card">
+                <span>Cement</span>
+                <strong id="cement-output">—</strong>
+              </article>
+
+              <article class="material-card">
+                <span>Fine aggregate</span>
+                <strong id="fine-output">—</strong>
+              </article>
+
+              <article class="material-card">
+                <span>Coarse aggregate</span>
+                <strong id="coarse-output">—</strong>
+              </article>
+
+              <article class="material-card water-card">
+                <span>Carbonated mixing water</span>
+                <strong id="water-output">—</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="carbon-target">
+            <div>
+              <span>Required added CO₂</span>
+              <strong id="co2-mass-output">—</strong>
+            </div>
+
+            <span class="target-arrow" aria-hidden="true">→</span>
+
+            <div>
+              <span>Required uptake in water</span>
+              <strong id="uptake-output">—</strong>
+            </div>
+          </section>
+
+          <section class="operating-section">
+            <div class="operating-heading">
+              <h3>Operating target</h3>
+              <span id="estimate-status">—</span>
+            </div>
+
+            <div class="operating-grid">
+              <article>
+                <span>Pump speed</span>
+                <strong id="speed-output">—</strong>
+              </article>
+
+              <article>
+                <span>Estimated CO₂ flow setting</span>
+                <strong id="flow-output">—</strong>
+              </article>
+
+              <article class="ph-target">
+                <span>Expected handheld outlet pH</span>
+                <strong id="ph-output">—</strong>
+              </article>
+            </div>
+
+            <p id="operating-explanation"></p>
+
+            <p class="field-note">
+              The pH is an empirical estimate for the tested water
+              chemistry and temperature. It is not an independent
+              confirmation of dose when those conditions change.
+            </p>
+          </section>
+
+          <details class="supporting-data">
+            <summary>See the test points behind this estimate</summary>
+            <div id="supporting-points"></div>
+          </details>
+
+          <details class="calculation-details">
+            <summary>Follow the calculation</summary>
+            <div id="calculation-steps"></div>
+          </details>
+
+          <button id="copy-plan" class="copy-button" type="button">
+            Copy batch plan
+          </button>
+
+          <p id="copy-feedback" role="status"></p>
+        </div>
+      </section>
+    </div>
+
+    <section class="assumptions">
+      <h2>What this plan assumes</h2>
+
+      <ul>
+        <li>
+          Cube mass means fresh concrete mass, excluding the mould.
+        </li>
+        <li>
+          Mix proportions are mass ratios. The calculated batch
+          contains cement, aggregates and water.
+        </li>
+        <li>
+          The recipe does not include SCMs or admixtures in this
+          first version.
+        </li>
+        <li>
+          Aggregate moisture and absorption corrections are not
+          included. Water is converted at approximately 1 kg/L.
+        </li>
+        <li>
+          All mixing water is carbonated, and its added CO₂
+          concentration is retained until mixing.
+        </li>
+        <li>
+          Operating estimates use the supplied 30, 40 and 50 Hz
+          test data. Targets outside the tested concentration
+          range are flagged rather than extrapolated.
+        </li>
+        <li>
+          Added CO₂ delivered through water and CO₂ mineralized
+          in concrete are separate quantities.
+        </li>
+      </ul>
+    </section>
+
+    <footer>
+      <span>CO₂ LAB / BATCH PLANNER</span>
+      <span>Batch calculations · Test-based operating estimates</span>
+    </footer>
+  </main>
+</body>
+</html>
